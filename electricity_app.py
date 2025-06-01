@@ -11,7 +11,7 @@ def load_model():
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv(r"C:\Users\vidit\Downloads\Apps\ICT_Subdimension_Dataset new (1).csv")
+    df = pd.read_csv(r"https://github.com/ParamjeetParmar/Electricity-Consumption/blob/main/ICT_Subdimension_Dataset%20new%20(1).csv")
     le = LabelEncoder()
     df['City_encoded'] = le.fit_transform(df['City'])
     return df, le
