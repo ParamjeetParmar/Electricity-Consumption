@@ -4,17 +4,34 @@ import joblib
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 import os
+import requests
+
+# === Helper to download files from GitHub if not found locally ===
+def download_file_from_github(url, filename):
+    if not os.path.exists(filename):
+        r = requests.get(url)
+        if r.status_code == 200:
+            with open(filename, 'wb') as f:
+                f.write(r.content)
 
 # === Load model and data ===
 @st.cache_resource
 def load_model():
-    model_path = os.path.join(os.path.dirname(__file__), "xgb_electricity_model.pkl")
+    model_path = "xgb_electricity_model.pkl"
+    download_file_from_github(
+        "https://raw.githubusercontent.com/ParamjeetParmar/Electricity-Consumption/main/xgb_electricity_model.pkl",
+        model_path
+    )
     return joblib.load(model_path)
 
 @st.cache_data
 def load_data():
-    csv_url = "https://raw.githubusercontent.com/ParamjeetParmar/Electricity-Consumption/main/ICT_Subdimension_Dataset%20new%20(1).csv"
-    df = pd.read_csv(csv_url)
+    data_path = "ICT_Subdimension_Dataset.csv"
+    download_file_from_github(
+        "https://raw.githubusercontent.com/ParamjeetParmar/Electricity-Consumption/main/ICT_Subdimension_Dataset%20new%20(1).csv",
+        data_path
+    )
+    df = pd.read_csv(data_path)
     le = LabelEncoder()
     df['City_encoded'] = le.fit_transform(df['City'])
     return df, le
@@ -25,13 +42,31 @@ st.set_page_config(page_title="Electricity Forecast", layout="wide")
 # === Custom CSS ===
 st.markdown("""
     <style>
-        .main { background-color: #f9f9f9; }
-        .reportview-container { padding-top: 1rem; }
-        .block-container { padding: 2rem; }
-        .big-font { font-size:30px !important; font-weight: bold; color: #ff7e00; }
-        .sub-font { font-size:20px !important; color: #333333; }
-        .dataframe th, .dataframe td { text-align: center; }
-        .stButton>button { background-color: #4CAF50; color: white; }
+        .main {
+            background-color: #f9f9f9;
+        }
+        .reportview-container {
+            padding-top: 1rem;
+        }
+        .block-container {
+            padding: 2rem 2rem 2rem 2rem;
+        }
+        .big-font {
+            font-size:30px !important;
+            font-weight: bold;
+            color: #ff7e00;
+        }
+        .sub-font {
+            font-size:20px !important;
+            color: #333333;
+        }
+        .dataframe th, .dataframe td {
+            text-align: center;
+        }
+        .stButton>button {
+            background-color: #4CAF50;
+            color: white;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -41,10 +76,10 @@ st.markdown("<div class='sub-font'>Predict the future of smart meter deployment 
 
 # === Sidebar ===
 st.sidebar.markdown("### 📅 Select Year Range")
-start_year, end_year = st.sidebar.slider("Predict from year to year", 2025, 3025, (2030, 3025))
+start_year, end_year = st.sidebar.slider("Predict from year to year", 2025, 3025, (2030, 2040))
 future_years = list(range(start_year, end_year + 1))
 
-# === Load model and data ===
+# === Load model and data
 model = load_model()
 df, le = load_data()
 
@@ -80,4 +115,19 @@ result_df = pd.concat(predictions, ignore_index=True)
 # === Prediction Table ===
 st.markdown("### 📊 Prediction Table")
 with st.container():
-    st.dataframe(result_df.style.format({"Predicted Smart Meter_
+    st.dataframe(result_df.style.format({"Predicted Smart Meters (%)": "{:.2f}"}), height=500)
+
+# === Download Button ===
+st.download_button("📥 Download as CSV", result_df.to_csv(index=False), "predictions.csv", mime="text/csv")
+
+# === Line Chart ===
+st.markdown("### 📈 Smart Meter Trends by City")
+fig, ax = plt.subplots(figsize=(12, 6))
+for city in result_df["City"].unique():
+    city_data = result_df[result_df["City"] == city]
+    ax.plot(city_data["Predicted Year"], city_data["Predicted Smart Meters (%)"], label=city)
+ax.set_xlabel("Year")
+ax.set_ylabel("Smart Meters (%)")
+ax.set_title("Smart Meter Forecast (City-wise)")
+ax.legend(loc="upper left", fontsize="small")
+st.pyplot(fig)
