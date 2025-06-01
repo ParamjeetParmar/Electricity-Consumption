@@ -7,7 +7,7 @@ from sklearn.preprocessing import LabelEncoder
 # === Load model and data ===
 @st.cache_resource
 def load_model():
-    return joblib.load(r"C:\Users\vidit\Downloads\Apps\xgb_electricity_model.pkl")
+    return joblib.load(r"https://github.com/ParamjeetParmar/Electricity-Consumption/blob/main/xgb_electricity_model.pkl")
 
 @st.cache_data
 def load_data():
