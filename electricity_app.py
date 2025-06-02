@@ -76,7 +76,7 @@ st.markdown("<div class='sub-font'>Predict the future of smart meter deployment 
 
 # === Sidebar ===
 st.sidebar.markdown("### 📅 Select Year Range")
-start_year, end_year = st.sidebar.slider("Predict from year to year", 2025, 2125, (2025, 2125))
+start_year, end_year = st.sidebar.slider("Predict from year to year", 2025, 2045, (2025, 2045))
 future_years = list(range(start_year, end_year + 1))
 
 # === Load model and data
